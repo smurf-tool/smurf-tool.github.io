@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+
+  <title>SMURF</title>
+  <meta name="description" content="SMURF Monitor Unveils Roadblocking Features">
+
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.min.css">
+  <link rel="stylesheet" href="/css/scrolling-nav.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <script src="/jquery/jquery.min.js"></script>
+  <script src="/bootstrap/js/bootstrap.min.js"></script>
+  <link rel="stylesheet/less" type="text/css" href="/css/styles.less">
+  <script src="/js/less.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="/css/base.css">
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro|Noto+Sans' rel='stylesheet' type='text/css'>
+
+  <link rel="canonical" href="https://smurf-tool.github.io//">
+</head>
+
+
+  <body id="page-top" data-spy="scroll" data-target="#sidebar" data-offset="50">
+    <div class="container fillheight">
+      <div class="row">
+        <div class="col">
+          <div class="section">
+    <h2>SMURF Monitor Unveils Roadblocking Features</h2>
+    <p>Here, you find the source code to the submission <i>Who's Hosting the Block Party? Studying Third-Party Blockage of CSP and SRI</i>.</p>
+</div>
+<div class="section">
+    <h3>Installation</h3>
+    <p>Download the <a href="smurf.zip">zipped source code package</a>. You can then make use of our provided Docker container by issuing the following two commands:
+        <br>
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">docker build <span class="nt">-t</span> smurf <span class="nb">.</span>
+docker run <span class="nt">--cap-add</span><span class="o">=</span>SYS_ADMIN <span class="nt">-it</span> smurf:latest /bin/bash </code></pre></figure>
+<br>
+<h4>Local installation</h4>
+<p>
+If you want to install it locally you need a working Node and NPM installation depending on your system and additionally need to install our dependencies throug invoking
+<pre>npm install</pre>
+Note that depending on your operating system, you may have to modify <tt>config.executablePath</tt> (in <tt>arguments.js</tt>) to point to your installation of Chrome/Chromium.
+</p>
+</div>
+<div class="section">
+    <h3>Running analyses</h3>
+    <p>
+        To run the toolchain, you can simply invoke <tt>smurf.js</tt> and pass the URL you want to check. 
+<pre>node smurf.js --url https://realtor.com</pre>
+
+This will visit <tt>https://realtor.com</tt> and generate a simplified inclusion tree of the main frame. It will print those chains which exhibit more than two parties according the the eTLD+1. Additionally supplying the <tt>--showCspResults</tt> as a command line parameter will provide the results of our incompatibility analysis of the observed behavior aggregated to hosts.
+<br><br>
+For an example of the aforementioned URL, see results below. It indicates that <tt>securepubads.g.doubleclick.net</tt> is parser-inserting scripts, making <tt>strict-dynamic</tt> infeasbile. It also indicates that the site itself writes inline scripts, and that <tt>securepubads.g.doubleclick.net</tt>, <tt>ajax.googleapis.com</tt>, and
+    <tt>assets.adobedtm.com</tt> add elements to the DOM which contain inline event handlers; all of these require <tt>unsafe-inline</tt>. Finally, we see that the host itself as well as <tt>c.amazon-adsystem.com</tt>, requiring a potential CSP to contain <tt>unsafe-eval</tt> as well.
+
+<div class="row course">
+    <pre>
+$ node smurf.js --url https://realtor.com --showCspResults
+[SMURF] Starting chrome...
+[SMURF] Setting up...
+[SMURF] Visiting https://realtor.com
+[SMURF] Please wait up to 30 seconds
+[SMURF] Loaded https://www.realtor.com/
+[SMURF] Inclusion analysis:
+https://www.realtor.com/
+===>
+===> https://static.criteo.net/js/ld/publishertag.prebid.js
+
+https://www.realtor.com/assets/prod/c3d00b9/_next/static/runtime/main-3d44de64d2d764f35183.js
+===> https://www.realtor.com/rdc_user_check.js
+===> https://www.realtor.com/assets/prod/c3d00b9/_next/static/chunks/64.96b7b41f05d066991906.js
+===> https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js
+===> https://assets.adobedtm.com/6809d1ba6f0c/c4bef609fe0d/launch-b1aeef4798eb.min.js
+======> https://connect.facebook.net/en_US/fbevents.js
+===> https://connect.facebook.net/en_US/sdk.js
+===> https://apis.google.com/js/api:client.js
+===> https://apis.google.com/js/platform.js
+
+https://securepubads.g.doubleclick.net/tag/js/gpt.js
+===> https://adservice.google.de/adsid/integrator.js?domain=www.realtor.com
+===> https://securepubads.g.doubleclick.net/gpt/pubads_impl_2020072701.js
+===> https://adservice.google.com/adsid/integrator.js?domain=www.realtor.com
+
+=========================================================================================================
+[SMURF] CSP analysis:
+{
+  strictDynamicViolator: Set(1) { 'securepubads.g.doubleclick.net' },
+  inlineScriptWritingHosts: Set(1) { 'www.realtor.com' },
+  inlineHandlerWritingHosts: Set(4) {
+    'www.realtor.com',
+    'securepubads.g.doubleclick.net',
+    'ajax.googleapis.com',
+    'assets.adobedtm.com'
+  },
+  evalUsingHosts: Set(2) { 'www.realtor.com', 'c.amazon-adsystem.com' }
+}
+=========================================================================================================
+=========================================================================================================
+[SMURF] Order (in each block)
+[SMURF]  - The first URL caused the avalanche of inclusions, if it is the loaded URL it was initiated by an inline script
+[SMURF]  - The last URL was the finally included script caused by all above it
+[SMURF] Indentation
+[SMURF]  - Indentation indicates inclusion depth
+[SMURF]  - Same indentation indicates that one resource included multiple further resources
+[SMURF] Colors
+[SMURF]  - Same color means same party (uses eTLD+1 without extended same-party)
+[SMURF]  - If more parties than colors available, grey is used for the remaining
+[SMURF]  - Colors are reset between blocks
+[SMURF] Trees are simplified to get useable output on the console
+[SMURF]  - Only prints scripts with at least two different third parties in the subtree
+=========================================================================================================
+</pre>
+</div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+
+</html>

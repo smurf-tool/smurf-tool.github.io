@@ -1,0 +1,1 @@
+Sitemap: https://smurf-tool.github.io//sitemap.xml
